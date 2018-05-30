@@ -1,0 +1,37 @@
+##Install python and awscli
+- name: install python and awscli
+  block:
+#Blocks allow for logical grouping of tasks and in play error handling. 
+#Most of what you can apply to a single task can be applied at the block level, 
+#which also makes it much easier to set data or directives common to the tasks.     
+    - name: install python-pip   
+      apt:
+#Manages apt packages (such as for Debian/Ubuntu).
+#install python-pip         
+        name: python-pip
+        update_cache: yes
+#Run the equivalent of apt-get update before the operation.
+#Can be run as part of the package installation or as a separate step.        
+    
+    - name: install git
+      apt:
+        name: git
+
+    - name: install boto
+      pip:
+#Manage Python library dependencies. 
+#To use this module, one of the following keys is required: name or requirement        
+        name: pip 
+#The name of a Python library to install or the url of the remote package.           
+        version: 10.0.1
+#The version number to install of the Python library specified in the name parameter.        
+
+    - name: install boto
+      pip:
+        name: boto    
+  become: yes
+#Ansible allows you to ‘become’ another user, different from the user that logged into the machine (remote user). 
+#This is done using existing privilege escalation tools such as sudo, su, pfexec, doas, pbrun, dzdo, ksu, runas and others.  
+#become to sudo
+#become: yes
+#set to yes to activate privilege escalation.

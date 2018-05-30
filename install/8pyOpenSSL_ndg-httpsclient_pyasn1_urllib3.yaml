@@ -1,0 +1,17 @@
+####
+#install pyOpenSSL ndg-httpsclient pyasn1 urllib3 for python2.7 sni
+- name: Install python prequisites for SNI 2.7.6
+  block:
+    - name: install for sni
+      pip:
+        name: pyOpenSSL
+    - name: install ndg-httpsclient for sni
+      pip:
+        name: ndg-httpsclient
+    - name: install pyasn1 for sni
+      pip:
+        name: pyasn1
+    - name: install urllib3 for sni
+      pip:
+        name: urllib3
+  become: yes

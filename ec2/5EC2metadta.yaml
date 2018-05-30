@@ -1,0 +1,6 @@
+####For s3 cp
+- name: Gather facts
+  ec2_metadata_facts:
+ ## Gather EC2 metadata facts
+ #This module fetches data from the instance metadata endpoint in ec2
+ # The module must be called from within the EC2 instance itself.

@@ -1,0 +1,13 @@
+- name: Using the instance ID, get is own tags
+  local_action:
+ #local_action tries to ssh to localhost   
+    module: ec2_tag 
+ #Creates, removes and lists tags from any EC2 resource. The resource is referenced by its resource id (e.g. an instance being i-XXXXXXX).    
+    resource: "{{ ansible_ec2_instance_id }}"
+ #The EC2 resource id.   
+    state: list
+ #Use list to interrogate the tags of an instance.   
+    region: "{{ ansible_ec2_placement_region }}" 
+  register: instance_tags
+- debug: var=instance_tags
+#output instance_tags as variable
