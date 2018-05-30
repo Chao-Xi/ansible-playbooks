@@ -1,0 +1,11 @@
+- name: Create motd file
+#this file is in templayter folder
+  template:
+    src: 01-warning.j2
+    dest: /etc/update-motd.d/01-warning
+#move from srec todest    
+    owner: root
+    group: root
+    mode: 0755
+#sudo change owner and group of motd file    
+  become: yes

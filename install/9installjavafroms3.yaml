@@ -1,0 +1,46 @@
+###Ensure jdk1.8.0_162 exists, for jenkins slave setup
+##Check exists or download from s3 and extract it
+- name: Check is jdk1.8.0_162 installed
+  stat:
+    path: /usr/local/jdk1.8.0_162
+  register: jdk18_162_dir
+#check jdk is installed at path: /usr/local/jdk1.8.0_162
+#register as jdk18_162_dir
+
+- name: Install jdk1.8.0_162 
+  block:
+    - name: install boto3
+      pip:
+        name: boto3
+#install boto3        
+    - aws_s3:
+          bucket: bbmobile-jenkins-archive
+          object: /java/jdk/jdk-8u162-linux-x64.tar.gz
+          dest: /tmp/jdk-8u162-linux-x64.tar.gz
+          mode: get
+          overwrite: different
+#download and woverwrite package from s3 
+#aws_s3 bucket oject dest mode:get  overwwrite: different        
+    - stat:
+        path: /tmp/jdk-8u162-linux-x64.tar.gz
+        checksum_algorithm: sha256
+        get_checksum: yes
+      register: jdk_8u162_stat
+#checksum_algorithm       
+    - fail:
+        msg: "Failure, file is not correct."
+      when: (jdk_8u162_stat.stat.checksum != '68ec82d47fd9c2b8eb84225b6db398a72008285fafc98631b1ff8d2229680257')
+    
+    - unarchive:
+        src: /tmp/jdk-8u162-linux-x64.tar.gz
+        dest: /usr/local/
+        remote_src: yes
+ #unarchive to remote       
+    - file:
+        path: /usr/local/jdk1.8.0_162
+        owner: ubuntu
+        group: ubuntu
+        recurse: yes
+ #change owner and group of folder recursive       
+  when: jdk18_162_dir.stat.exists == False
+  become: yes
