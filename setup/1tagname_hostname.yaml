@@ -1,0 +1,26 @@
+###Set hostname and hosts
+#Set hostname as instance id
+#Update /etc/hosts
+#Add stash hosts
+#Add crowd-291 hosts
+- name: setup hostname as tag Name
+  block:
+    - hostname:
+        name: "{{ instance_tags.tags.Name }}"
+      
+    - lineinfile:
+#This module ensures a particular line is in a file, or replace an existing line using a back-referenced regular expression.        
+        path: /etc/hosts
+#The file to modify.        
+        regexp: '^127\.0\.0\.1'
+#The regular expression to look for in every line of the file        
+        line: "127.0.0.1 localhost {{ instance_tags.tags.Name }}"
+
+    - lineinfile:
+        path: /etc/hosts
+        line: "10.103.59.210 stash.bbpd.io"
+    - lineinfile:
+        path: /etc/hosts
+        line: "10.103.60.153 crowd-291.bbpd.io"
+  become: yes
+
