@@ -1,0 +1,53 @@
+- name: Check is android sdk installed
+  stat:
+    path: /usr/local/Android/sdk/tools
+  register: android_sdk_dir
+#/usr/local/Android/sdk/tools as sdk tools path
+
+
+#install boto3
+- name: Install android jdk tools 
+  block:
+    - name: install boto3
+      pip:
+        name: boto3
+    - aws_s3:
+          bucket: bbmobile-jenkins-archive
+          object: /android-sdk-tools/sdk-tools-linux-3859397.zip 
+          dest: /tmp/sdk-tools-linux-3859397.zip
+          mode: get
+          overwrite: different
+ #check sdk tools installed or not         
+    - stat:
+        path: /tmp/sdk-tools-linux-3859397.zip
+        checksum_algorithm: sha256
+ #checksum_algorithm of package       
+        get_checksum: yes
+      register: sdk_tool_stat
+ #get checksum register as sdk_tool_stat     
+    - fail:
+        msg: "Failure, file is not correct."
+      when: (sdk_tool_stat.stat.checksum != '444e22ce8ca0f67353bda4b85175ed3731cae3ffa695ca18119cbacef1c1bea0')
+ #fail when sdk checksum is not right     
+    - file:
+        path: /usr/local/Android/
+        state: directory
+        mode: 0755 
+ #create a new dictory and change dictory mode         
+    - file:
+        path: /usr/local/Android/sdk/
+        state: directory
+        mode: 0755  
+#unarchive the zip to this new folder          
+    - unarchive:
+        src: /tmp/sdk-tools-linux-3859397.zip
+        dest: /usr/local/Android/sdk/
+        remote_src: yes
+#create a new dictory and change disctory and file owner and group
+    - file:
+        path: /usr/local/Android/sdk/
+        owner: ubuntu
+        group: ubuntu
+        recurse: yes
+  when: android_sdk_dir.stat.exists == False
+  become: yes

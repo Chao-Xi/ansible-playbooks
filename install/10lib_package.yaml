@@ -1,0 +1,42 @@
+#install list include 
+#lib32z1
+#unzip
+#lib32ncurses5 
+#lib32stdc++6 
+#mesa-utils 
+#libxdamage1 
+#libxfixes3 
+- name: Install lib32z1 lib32ncurses5 lib32stdc++6
+  block:
+    - name: Install lib32z1 for sdk ui test 
+      apt:
+        name: lib32z1 
+        state: present
+        update_cache: yes
+    - name: Install unzip for sdk ui test 
+      apt:
+        name: unzip 
+        state: present
+    
+    - name: Install lib32ncurses5 for sdk ui test 
+      apt:
+        name: lib32ncurses5 
+        state: present
+    
+    - name: Install lib32stdc++6 for sdk ui test 
+      apt:
+        name: lib32stdc++6 
+        state: present
+    - name: Install mesa-utils for sdk ui test 
+      apt:
+        name: mesa-utils 
+        state: present
+    - name: Install libxdamage1 for sdk ui test 
+      apt:
+        name: libxdamage1 
+        state: present
+    - name: Install libxfixes3 for sdk ui test 
+      apt:
+        name: libxfixes3 
+        state: present
+  become: yes
