@@ -1,0 +1,6 @@
+#pip install awscli
+- name: Install awscli via pip
+  pip: >
+    name=awscli
+    state=latest
+  become: yes  
