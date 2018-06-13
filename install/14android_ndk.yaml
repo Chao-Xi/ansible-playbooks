@@ -1,0 +1,68 @@
+- name: Check is android ndk installed
+  stat:
+    path: /usr/local/android-ndk/
+  register: android_ndk_dir
+
+
+- name: Install android ndk tools
+  block:
+    - name: install boto3
+      pip:
+        name: boto3
+
+    #download android-ndk-r9c-linux-x86_64.tar.bz2 from S3   
+    #aws_s3
+    #bucket
+    #object
+    #dest
+    #mode: get put delete create geturl getstr delobj list
+    #overwrite only its different
+    #process name
+    - aws_s3:
+          bucket: bbmobile-jenkins-archive
+          object: /android-sdk-tools/android-ndk-r9c-linux-x86_64.tar.bz2
+          dest: /tmp/android-ndk-r9c-linux-x86_64.tar.bz2
+          mode: get
+          overwrite: different
+      name: get android-ndk-r9c-linux-x86_64.tar.bz2 from s3
+
+    #checksum_alogorithm:sha256    get_checksum: yes
+    - stat:
+        path: /tmp/android-ndk-r9c-linux-x86_64.tar.bz2
+        checksum_algorithm: sha256
+        get_checksum: yes
+      name: check sha256 of android-ndk-r9c-linux-x86_64.tar.bz2
+      register: ndk_tool_stat
+    - fail:
+        msg: "Failure, file is not correct."
+      when: (ndk_tool_stat.stat.checksum != '300be3963d775d83c349487a68b4985df492561433d2eb25d81725db1a98b958')
+    
+    #crate directory
+    - file:
+        path: /usr/local/android-ndk/
+        state: directory
+        mode: 0755
+      name: create directory /usr/local/android-ndk/
+
+ 
+    #unarchive to remote destination
+    #src dest 
+    #extra_opts : Specify additional options by passing in an array.
+    #extra_opts: ['--strip-components=1']
+    - unarchive:
+        src: /tmp/android-ndk-r9c-linux-x86_64.tar.bz2
+        dest: /usr/local/android-ndk/
+        extra_opts: ['--strip-components=1']
+        remote_src: yes
+      name: unarchive android-ndk-r9c-linux-x86_64.tar.bz2
+
+    #change file owner of usr/local/android-ndk/
+    #when: android_ndk_dir.stat.exists == False  
+    - file:
+        path: /usr/local/android-ndk/
+        owner: ubuntu
+        group: ubuntu
+        recurse: yes
+      name: change owner of /usr/local/android-ndk/
+  when: android_ndk_dir.stat.exists == False
+  become: yes  

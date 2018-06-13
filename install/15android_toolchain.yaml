@@ -1,0 +1,29 @@
+- name: Check is android toolchain installed
+  stat:
+    path: /usr/local/android-toolchain
+  register: android_toolchain_dir
+
+#install toolchain tools with env=JDK_HOME_17
+- name: Install android toolchain tools
+  block:
+    - name: install boto3
+      shell: '/usr/local/android-ndk/build/tools/make-standalone-toolchain.sh --platform=android-14 --install-dir=/usr/local/android-toolchain --toolchain=arm-linux-androideabi-4.8'
+  environment:
+    JDK_HOME_17: /usr/local/jdk1.7.0_79
+  when: android_toolchain_dir.stat.exists == False
+  become: yes
+
+#android x86 toolchain installed
+- name: Check is android x86 toolchain installed
+  stat:
+    path: /usr/local/android-x86toolchain
+  register: android_x86toolchain_dir
+
+- name: Install android toolchain tools
+  block:
+    - name: install boto3
+      shell: '/usr/local/android-ndk/build/tools/make-standalone-toolchain.sh --platform=android-14 --install-dir=/usr/local/android-x86toolchain --toolchain=x86-4.8'
+  environment:
+    JDK_HOME_17: /usr/local/jdk1.7.0_79
+  when: android_x86toolchain_dir.stat.exists == False
+  become: yes
