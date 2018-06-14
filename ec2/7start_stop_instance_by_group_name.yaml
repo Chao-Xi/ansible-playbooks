@@ -1,0 +1,68 @@
+---
+- hosts: 127.0.0.1
+  connection: local
+
+  tasks:
+  - name: get all jenkins agents status
+    ec2_instance_facts:
+#filter: A dict of filters to apply. Each dict item consists of a filter key and a filter value
+      filters:
+        "tag:GroupName": "{{ GroupName }}"
+#tag:GroupName =>   {{ GroupName }}        
+      region: "{{ REGION_NAME }}"
+#region =>       
+    register: agents_facts
+#register the aws fact    
+    tags:
+      - describe
+      - start
+      - stop
+
+#Print agent info
+  - name: print agents info
+    debug: var=agents_facts
+    tags:
+      - describe
+      - start
+      - stop
+
+#Print instance id
+  - name: print instance id
+    debug:
+      msg: "{{item.tags.Name}} {{item.instance_id}} is {{item.state.name}}"
+    with_items: "{{ agents_facts.instances }}"
+#with_items => all filtered instances   
+    tags:
+      - describe
+      - start
+      - stop
+
+#If you have a large playbook it may become useful to be able to run a specific part of the configuration without running the whole playbook.
+  - name: Ensure agents are running
+    ec2_instance:
+#ec2_instances start running      
+      state: running
+      instance_ids: 
+# If you specify one or more instance IDs, only instances that have the specified IDs are returned.         
+          - "{{ item.instance_id }}"
+    environment:
+      AWS_REGION: "{{ REGION_NAME }}"
+    with_items: "{{ agents_facts.instances }}"
+    tags:
+      - start
+
+#
+  - name: Ensure agents are stopped
+    ec2_instance:
+      state: stopped
+      instance_ids:
+          - "{{ item.instance_id }}"
+    environment:
+      AWS_REGION: "{{ REGION_NAME }}"
+    with_items: "{{ agents_facts.instances }}"
+    tags:
+      - stop
+
+
+
+
