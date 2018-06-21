@@ -1,0 +1,16 @@
+#Check sha256 sum of this file
+- name: Get sha256 sum of script
+  stat:
+    path: /tmp/jre-8u66-linux-x64.tar.gz
+    checksum_algorithm: sha256
+    get_checksum: yes
+  register: jre_8u66_stat
+  when: jre_dir.stat.exists == False
+  become: yes
+
+- name: Verify sha256sum of script before execution.
+  fail:
+    msg: "Failure, file is not correct."
+  when: (jre_dir.stat.exists == False) and
+        (jre_8u66_stat.stat.checksum != 'f2249370a6ac4ca8977b66d7665179f0fef4df732f3af80b0f34567d594588bf')
+  become: yes

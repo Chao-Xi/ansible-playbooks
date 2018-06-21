@@ -1,0 +1,7 @@
+- name: Ensure owner of jre is ubuntu
+  file:
+    path: /usr/local/jre1.8.0_66
+    owner: ubuntu
+    group: ubuntu
+    recurse: yes
+  become: yes
