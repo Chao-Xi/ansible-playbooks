@@ -39,4 +39,8 @@
       apt:
         name: libxfixes3 
         state: present
+    - name: Install libpulse0 for sdk ui test
+      apt:
+        name: libpulse0
+        state: present
   become: yes
