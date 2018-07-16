@@ -1,0 +1,37 @@
+##Install python 2.7.9 in pyenv
+- name: get pyenv 2.7.9 stat
+  stat:
+    path: /home/ubuntu/pyenv/versions/2.7.9
+  register: py279_stat
+
+- name: Install pythone 2.7.9
+  command: /home/ubuntu/pyenv/bin/pyenv install 2.7.9
+  environment:
+    PYENV_ROOT: /home/ubuntu/pyenv
+  when: py279_stat.stat.exists == False
+
+#install ansisble after install python 
+
+##Install ansible in pyenv
+- name: get ansible virtualenv 2.7.9 stat
+  stat:
+    path: /home/ubuntu/pyenv/versions/ansible
+  register: ansible_stat
+
+- name: Install ansible
+  command: /home/ubuntu/pyenv/bin/pyenv virtualenv 2.7.9 ansible
+  environment:
+    PYENV_ROOT: /home/ubuntu/pyenv
+  when: ansible_stat.stat.exists == False
+
+#copy requirements.txt to ansible virtualenv
+- name: ensure requirements.txt exists
+  copy:
+    src: ansible_requirements.txt
+    dest: "/home/ubuntu/pyenv/versions/ansible/requirements.txt"
+
+
+- name: ensure all requirement install in ansible virtualenv
+  pip:
+    requirements: "/home/ubuntu/pyenv/versions/ansible/requirements.txt"
+    virtualenv: "/home/ubuntu/pyenv/versions/ansible/"

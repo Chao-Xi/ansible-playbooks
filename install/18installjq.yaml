@@ -1,0 +1,15 @@
+---
+- hosts: 127.0.0.1
+  tasks:
+    
+    - name: check jq is installed 
+      stat:
+        path: /usr/bin/jq
+      register: jq_dir
+
+    - name: install jq
+      apt:
+        name: jq
+        update_cache: yes
+      become: yes
+      when: jq_dir.stat.exists == False   

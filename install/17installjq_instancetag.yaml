@@ -1,0 +1,13 @@
+##Should be removed, we don't encourage jq
+- name: check jq is installed
+  stat:
+    path: /usr/bin/jq
+    register: jq_dir
+
+- Name: install jq bbmobile-ci-jenkins
+  apt:
+    name: jq
+    update_cache: yes
+  become: yes
+  when:  (instance_tags.tags.Name == 'bbmobile-ci-jenkins') and
+         (jq_dir.stat.exists == False)

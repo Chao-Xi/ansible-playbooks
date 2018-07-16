@@ -1,0 +1,11 @@
+##Install python 2.7.9 in pyenv
+- name: get pyenv 2.7.9 stat
+  stat:
+    path: /home/ubuntu/pyenv/versions/2.7.9
+  register: py279_stat
+
+- name: Install python 2.7.9
+  command: /home/ubuntu/pyenv/bin/pyenv install 2.7.9
+  environment:
+    PYENV_ROOT: /home/ubuntu/pyenv
+  when: py279_stat.stat.exists == False

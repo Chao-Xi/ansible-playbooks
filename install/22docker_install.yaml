@@ -1,0 +1,102 @@
+###https://docs.docker.com/install/linux/docker-ce/ubuntu/
+
+#Unless you have a strong reason not to, install the linux-image-extra-* packages, 
+#which allow Docker to use the aufs storage drivers.
+
+# sudo apt-get update
+#
+# sudo apt-get install \
+#    linux-image-extra-$(uname -r) \
+#    linux-image-extra-virtual
+# $(uname -r) == ansible_kernel
+- name: Install linux-image-extra-* packages 
+  block:
+    - apt:
+        name: "linux-image-extra-{{ ansible_kernel }}"
+        state: present
+        update_cache: yes
+      name: install "linux-image-extra-{{ ansible_kernel }}"
+    - apt:
+        name: "linux-image-extra-virtual"
+        state: present
+      name: install linux-image-extra-virtual
+  become: yes
+  when: (ansible_distribution == 'Ubuntu') and
+        (ansible_distribution_version == '14.04')
+
+###https://docs.docker.com/install/linux/docker-ce/ubuntu/
+##Before you install Docker CE for the first time on a new host machine, 
+##you need to set up the Docker repository. Afterward, you can install and update Docker from the repository.
+# sudo apt-get install \
+#    apt-transport-https \
+#    ca-certificates \
+#    curl \
+#    software-properties-common
+- name: Install the package apt-transport-https ca-certificates curl software-properties-common
+  block:
+    - apt:
+        name: apt-transport-https
+        state: present
+      name: install apt-transport-https
+    - apt:
+        name: curl
+        state: present
+      name: install curl
+    - apt:
+        name: ca-certificates
+        state: present
+      name: install ca-certificates
+    - apt:
+        name: software-properties-common
+        state: present
+      name: install software-properties-common
+  become: yes
+  when: (ansible_distribution == 'Ubuntu')
+
+###Install docker
+#Add docker apk key
+#Add Docker’s official GPG key:
+# curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
+
+#add apt repo
+#update repositories cache and install "docker-ce" package
+- name: Add docker apk key
+  block:
+    - apt_key:
+        url: https://download.docker.com/linux/ubuntu/gpg
+        state: present
+      name: add Add docker apk key
+#Use the following command to set up the stable repository. 
+#You always need the stable repository, even if you want to install builds from the edge or test repositories as well. 
+#    sudo add-apt-repository \
+#    "deb [arch=amd64] https://download.docker.com/linux/ubuntu \
+#    $(lsb_release -cs) \
+#    stable"     
+    - apt_repository:
+        repo: "deb [arch=amd64] https://download.docker.com/linux/ubuntu {{ ansible_lsb.codename }} stable"
+        state: present
+      name: add apt repo
+    - apt:
+        name: docker-ce=17.12.1~ce-0~ubuntu
+        update_cache: yes
+      name: install docker-ce=17.12.1~ce-0~ubuntu
+  become: yes
+
+###https://docs.docker.com/install/linux/linux-postinstall/
+### Manage Docker as a non-root user
+##Add docker group, and add ubuntu to group
+#Add a new docker grounp
+# sudo groupadd docker
+#Add your user to the docker group
+#sudo usermod -aG docker $USER
+- name: add group docker
+  block:
+    - group:
+        name: docker
+        state: present
+      name: add user group docker
+    - user:
+        name: ubuntu
+        groups: ubuntu,docker
+      name: add ubuntu to group docker
+  become: yes

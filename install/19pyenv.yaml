@@ -1,0 +1,74 @@
+##Ansible install ansible virtualenv for itself
+#Pyenv is a bash extension - will not work on Windows - 
+#that intercepts your calls to python, pip, etc., to direct them to one of several of the system python tool-chains. 
+#So you always have all the libraries that you have installed in the selected python version available - 
+#as such it is good for users who have to switch between different versions of python.
+
+#pyenv-virtualenv is one plugin of pyenv
+
+#VirtualEnv, is pure python so works everywhere, it makes a copy of, optionally a specific version of, 
+#python and pip local to the activate environment which may or may not include links to the current system tool-chain, i
+#if it does not you can install just a known subset of libraries into that environment.
+
+- Name: get pyenv stat
+  stat:
+    path: /home/ubuntu/pyenv 
+  register: pyenv_stat
+
+- name: Install pyenv
+  block:
+    - name: Get pyenv-installer 
+      get_url:
+        url: https://github.com/pyenv/pyenv-installer/raw/master/bin/pyenv-installer
+        dest: /usr/local/bin/pyenv-installer
+        mode: 0755
+#rwx 2power2+2power1+2power0=7
+#x   1
+#w   2
+#wx  3
+#r   4
+#rx  5
+#rw  6
+    - name: Install pyenv
+      command: /usr/local/bin/pyenv-installer
+      environment:
+        PYENV_ROOT: /home/ubuntu/pyenv
+ #PYENV_ROOT is environment variable       
+      when: pyenv_stat.stat.exists == False
+
+
+    - name: Set pyenv owner to ubuntu
+      file:
+        path: /home/ubuntu/pyenv 
+        owner: ubuntu
+        group: ubuntu
+        recurse: yes
+
+    - name: add pyenv to bachrc
+#blockinfile module 
+      blockinfile:
+        path: /home/ubuntu/.bashrc
+        block: |
+          export PYENV_ROOT="/home/ubuntu/pyenv"
+          export PATH="/home/ubuntu/pyenv/bin:$PATH"
+          eval "$(pyenv init -)"
+          eval "$(pyenv virtualenv-init -)"
+  become: yes
+
+  when: pyenv_stat.stat.exists == False
+
+
+##Prequisite for python build
+- name: install
+  apt: 
+    name: "{{ item }}"
+    state: present
+  with_items:
+    - build-essential
+    - curl
+    - libssl-dev
+    - libbz2-dev
+    - libsqlite3-dev
+    - libreadline-dev
+  become: yes
+
