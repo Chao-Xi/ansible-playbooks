@@ -1,0 +1,125 @@
+##Install python and awscli
+- name: install python and awscli
+  block:
+    - name: install python-pip
+      apt:
+        name: python-pip
+        update_cache: yes
+    - name: install git
+      apt:
+        name: git 
+    - name: install boto
+      pip:
+        name: pip    
+        version: 10.0.1
+    - name: install boto
+      pip:
+        name: boto    
+  become: yes
+####For s3 cp
+- name: Gather facts
+  ec2_metadata_facts: 
+
+####
+#install pyOpenSSL ndg-httpsclient pyasn1 urllib3 for python2.7 sni
+- name: Install python prequisites for SNI 2.7.6
+  block:
+    - name: install for sni
+      pip:
+        name: pyOpenSSL
+    - name: install ndg-httpsclient for sni
+      pip:
+        name: ndg-httpsclient
+    - name: install pyasn1 for sni
+      pip:
+        name: pyasn1
+    - name: install urllib3 for sni
+      pip:
+        name: urllib3
+  become: yes
+
+- name: Using the instance ID, get is own tags
+  local_action:
+    module: ec2_tag
+    resource: "{{ ansible_ec2_instance_id }}"
+    state: list
+    region: "{{ ansible_ec2_placement_region }}"
+  register: instance_tags
+- debug: var=instance_tags
+
+###Set hostname and hosts
+#Set hostname as instance id
+#Update /etc/hosts
+#Add stash hosts
+#Add crowd-291 hosts
+- name: setup hostname as tag Name
+  block:
+    - hostname:
+        name: "{{ instance_tags.tags.Name }}"
+    - lineinfile:
+        path: /etc/hosts
+        regexp: '^127\.0\.0\.1'
+        line: "127.0.0.1 localhost {{ instance_tags.tags.Name }}"
+    - lineinfile:
+        path: /etc/hosts
+        line: "10.103.59.210 stash.bbpd.io"
+    - lineinfile:
+        path: /etc/hosts
+        line: "10.103.60.153 crowd-291.bbpd.io"
+  become: yes
+
+
+- name: ensure jenkins master pub key exists
+  authorized_key:
+    user: ubuntu
+    state: present
+    key: '{{ item }}'
+  with_file:
+    - jenkins_master_pub
+
+###Ensure jdk1.8.0_162 exists, for jenkins slave setup
+##Check exists or download from s3 and extract it
+- name: Check is jdk1.8.0_162 installed
+  stat:
+    path: /usr/local/jdk1.8.0_162
+  register: jdk18_162_dir
+
+- name: Install jdk1.8.0_162 
+  block:
+    - name: install boto3
+      pip:
+        name: boto3
+    - aws_s3:
+          bucket: bbmobile-jenkins-archive
+          object: /java/jdk/jdk-8u162-linux-x64.tar.gz
+          dest: /tmp/jdk-8u162-linux-x64.tar.gz
+          mode: get
+          overwrite: different
+    - stat:
+        path: /tmp/jdk-8u162-linux-x64.tar.gz
+        checksum_algorithm: sha256
+        get_checksum: yes
+      register: jdk_8u162_stat
+    - fail:
+        msg: "Failure, file is not correct."
+      when: (jdk_8u162_stat.stat.checksum != '68ec82d47fd9c2b8eb84225b6db398a72008285fafc98631b1ff8d2229680257')
+    - unarchive:
+        src: /tmp/jdk-8u162-linux-x64.tar.gz
+        dest: /usr/local/
+        remote_src: yes
+    - file:
+        path: /usr/local/jdk1.8.0_162
+        owner: ubuntu
+        group: ubuntu
+        recurse: yes
+  when: jdk18_162_dir.stat.exists == False
+  become: yes
+
+- name: Create motd file
+  template:
+    src: 01-warning.j2
+    dest: /etc/update-motd.d/01-warning
+    owner: root
+    group: root
+    mode: 0755
+  become: yes
