@@ -1,0 +1,101 @@
+- name: ensure kube dev config is updated
+  copy:
+    content: |
+        {{ kubecfg_stage }}
+    dest: "/home/{{ jenkins_builder }}/.kube/config_new_stage"
+    owner: "{{ jenkins_builder }}"
+    group: "{{ jenkins_builder }}"
+    mode: 0644
+  tags:
+    - kube_config
+  become: yes
+    
+- name: ensure kube dev config is updated
+  copy:
+    content: |
+        {{ kubecfg_dev }}
+    dest: "/home/{{ jenkins_builder }}/.kube/config_new_dev"
+    owner: "{{ jenkins_builder }}"
+    group: "{{ jenkins_builder }}"
+    mode: 0600
+  tags:
+    - kube_config
+  become: yes
+
+- name: ensure kube test config is updated
+  copy:
+    content: |
+        {{ kubecfg_dev }}
+    dest: "/home/{{ jenkins_builder }}/.kube/config_new_test"
+    owner: "{{ jenkins_builder }}"
+    group: "{{ jenkins_builder }}"
+    mode: 0600
+  tags:
+    - kube_config
+  become: yes
+
+ 
+- name: ensure kube prod config is updated
+  copy:
+    content: |
+        {{ kubecfg_prod }}
+    dest: "/home/{{ jenkins_builder }}/.kube/config_new_prod"
+    owner: "{{ jenkins_builder }}"
+    group: "{{ jenkins_builder }}"
+    mode: 0600
+  tags:
+    - kube_config
+  become: yes
+
+- name: ensure requirements.txt exists
+  copy:
+    src: "{{ role_path }}/files/requirements.txt"
+    dest: "/home/{{ jenkins_builder }}/pyenv/versions/k8s_py/requirements.txt"
+  tags:
+    - pip_file
+
+- name: ensure all requirement install in k8s_py virtualenv
+  pip:
+    requirements: "/home/{{ jenkins_builder }}/pyenv/versions/k8s_py/requirements.txt"
+    virtualenv: "/home/{{ jenkins_builder }}/pyenv/versions/k8s_py/"
+  tags:
+    - pip
+    - python
+
+- name: ensure all requirement install in ansible virtualenv
+  pip:
+    name: "{{ item }}"
+    virtualenv: "/home/{{ jenkins_builder }}/pyenv/versions/ansible/"
+  with_items:
+    - ansible
+    - boto3
+  tags:
+    - pip
+    - python
+
+
+###Install kubectl
+- name: Check if kubectl v1.9.4 has been installed
+  stat:
+    path: /usr/local/bin/kubectl
+    checksum_algorithm: sha256
+  register: kubectl_path
+
+
+- name: get kubectl v1.9.4 from s3 if not exist
+  aws_s3:
+    bucket: bbmobile-jenkins-archive
+    object: /kubectl/kubectl.1.9.4
+    dest: /usr/local/bin/kubectl
+    mode: get
+  when: (kubectl_path.stat.exists == False) or 
+        (kubectl_path.stat.checksum != "1649bcda95e1662da0616a5314261285fa4154d769dc4148cc339d859b564c39")
+
+
+- name: ensure right mod for kubectl
+  file:
+    path: /usr/local/bin/kubectl 
+    owner: root
+    group: root
+    mode: 0755
+  become: yes

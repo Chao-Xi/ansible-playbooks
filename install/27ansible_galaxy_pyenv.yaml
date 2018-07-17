@@ -1,0 +1,21 @@
+# https://github.com/avanov/ansible-galaxy-pyenv
+#This is Ansible Galaxy role for pyenv on Ubuntu.
+#
+- name: install pyenv
+  include_role:
+    name: avanov.pyenv
+  vars:
+    pyenv_path: "/home/ubuntu/pyenv"
+    pyenv_owner: "ubuntu"
+    pyenv_update_git_install: no
+    pyenv_enable_autocompletion: no
+    pyenv_python_versions:
+       - "3.5.2"
+       - "2.7.6"
+    pyenv_virtualenvs:
+       - venv_name: "k8s_py"
+         py_version: '3.5.2'
+       - venv_name: "ansible"
+         py_version: '2.7.6'
+#two pyenv virtualenvs name k8s_py and ansible
+
