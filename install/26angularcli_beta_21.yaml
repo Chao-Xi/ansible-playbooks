@@ -1,0 +1,20 @@
+### After install nvm and node, use them to install angular-cli
+###Ensure angular-cli@1.0.0-beta.21 exists
+#check angular-cli installed as node modules or not 
+- name: Check is /home/ubuntu/.nvm/versions/node/v6.10.3/lib/node_modules/angular-cli/bin/ng installed
+  stat:
+    path: /home/ubuntu/.nvm/versions/node/v6.10.3/lib/node_modules/angular-cli/bin/ng 
+  register: ng_path 
+
+#install  angular-cli@1.0.0-beta.21 with nvm 
+- name: "Install angular-cli@1.0.0-beta.21"
+  shell: ". /home/ubuntu/.nvm/nvm.sh && nvm use v6.10.3 && npm i --save -g angular-cli@1.0.0-beta.21"
+# nvm.sh
+# nvm use version
+# npm i --save   
+# You can also use the 'args' form to provide the options.  
+  args:
+# Executable: change the shell used to execute the command. Should be an absolute path to the executable. 
+# runs the command through a shell (/bin/sh) on the remote node.   
+    executable: /bin/bash
+  when: ng_path.stat.exists == False
