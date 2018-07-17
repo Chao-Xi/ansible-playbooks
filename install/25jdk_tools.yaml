@@ -1,0 +1,47 @@
+#check apache-ant installed or not
+- name: Check is apache-ant-1.9.3 installed
+  stat:
+    path: /usr/local/apache-ant-1.9.3
+  register: ant193_dir
+
+- name: Install jdk tools
+  block:
+ #install boto3 with pip
+ #Boto3 is the Amazon Web Services (AWS) Software Development Kit (SDK) for Python, 
+ #which allows Python developers to write software that makes use of services like Amazon S3 and Amazon EC2   
+    - name: install boto3
+      pip:
+        name: boto3
+ #download apache-ant zip package from s3      
+    - aws_s3:
+          bucket: bbmobile-jenkins-archive
+          object: /mbaas-builder-tools/apache-ant-1.9.3-src.zip
+          dest: /tmp/apache-ant-1.9.3-src.zip
+          mode: get
+          overwrite: different
+#check sha256 sum of this downloaded packge      
+    - stat:
+        path: /tmp/apache-ant-1.9.3-src.zip
+        checksum_algorithm: sha256
+        get_checksum: yes
+      register: ant_tgz_stat
+#if check sha256 script is not equaled, output message
+#Fail: This module fails the progress with a custom message. 
+#It can be useful for bailing out when a certain condition is met using 
+#If it's fail. other module after it, in the smae block, will stop 
+    - fail:
+        msg: "Failure, file is not correct."
+      when: (ant_tgz_stat.stat.checksum != '74c107a72d8f5691445e5afde22d85b447bea5c4654fdfb9833e01e0a0089cd8')
+#unarchive to special location      
+    - unarchive:
+        src: /tmp/apache-ant-1.9.3-src.zip
+        dest: /usr/local/
+        remote_src: yes
+#make sure or change  the owner and grounp of this location
+    - file:
+        path: /usr/local/apache-ant-1.9.3
+        owner: ubuntu
+        group: ubuntu
+        recurse: yes
+  when: ant193_dir.stat.exists == False
+  become: yes 

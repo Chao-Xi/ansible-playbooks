@@ -1,0 +1,113 @@
+- name: Check is jdk1.8.0_66 installed
+  stat:
+    path: /usr/local/jdk1.8.0_66
+  register: jdk_dir
+
+- name: get jdk1.8.0_66 from s3
+#    command: "aws s3 cp s3://bbmobile-jenkins-archive/java/jdk/jdk-8u66-linux-x64.tar.gz /tmp/jdk-8u66-linux-x64.tar.gz"
+  aws_s3:
+      bucket: bbmobile-jenkins-archive
+      object: /java/jdk/jdk-8u66-linux-x64.tar.gz
+      dest: /tmp/jdk-8u66-linux-x64.tar.gz
+      mode: get
+      overwrite: different
+  when: jdk_dir.stat.exists == False
+
+
+#  - name: get jdk1.8.0_101 from s3
+#    command: "aws s3 cp s3://bbmobile-jenkins-archive/java/jdk/jdk-8u101-linux-x64.tar.gz /tmp/jdk-8u101-linux-x64.tar.gz"
+#    when: jdk_dir.stat.exists == False
+
+- name: Get sha256 sum of script
+  stat:
+    path: /tmp/jdk-8u66-linux-x64.tar.gz
+    checksum_algorithm: sha256
+    get_checksum: yes
+  register: jdk_8u66_stat
+  when: jdk_dir.stat.exists == False
+  become: yes
+
+- name: Verify sha256sum of script before execution.
+  fail:
+    msg: "Failure, file is not correct."
+  when: (jdk_dir.stat.exists == False) and
+        (jdk_8u66_stat.stat.checksum != '7e95ad5fa1c75bc65d54aaac9e9986063d0a442f39a53f77909b044cef63dc0a')
+  become: yes
+
+- name: Extract jdk1.8.0_66
+  unarchive:
+    src: '/tmp/jdk-8u66-linux-x64.tar.gz'
+    dest: /usr/local/
+    remote_src: yes
+  when: jdk_dir.stat.exists == False
+  become: yes
+
+- name: Ensure owner of jdk is ubuntu
+  file:
+    path: /usr/local/jdk1.8.0_66
+    owner: ubuntu
+    group: ubuntu
+    recurse: yes
+  become: yes
+
+- name: install sdk and gradle
+  include_role:
+      name: Comcast.sdkman
+  vars:
+    sdkman_dir: /usr/local/sdkman
+    sdkman_auto_answer: true
+    sdkman_update: true
+    sdkman_install_packages:
+      - { candidate: gradle, version: '2.8' }
+    sdkman_defaults:
+      gradle: '2.8'
+    sdkman_flush_caches_before:
+      - temp
+    sdkman_flush_caches_after:
+      - archives
+      - broadcast
+      - candidates
+      - temp
+
+
+- name: Check is apache-ant-1.9.3 installed
+  stat:
+    path: /usr/local/apache-ant-1.9.3
+  register: ant193_dir
+
+- name: Install jdk tools
+  block:
+    - name: install boto3
+      pip:
+        name: boto3
+    - aws_s3:
+          bucket: bbmobile-jenkins-archive
+          object: /mbaas-builder-tools/apache-ant-1.9.3-src.zip
+          dest: /tmp/apache-ant-1.9.3-src.zip
+          mode: get
+          overwrite: different
+    - stat:
+        path: /tmp/apache-ant-1.9.3-src.zip
+        checksum_algorithm: sha256
+        get_checksum: yes
+      register: ant_tgz_stat
+    - fail:
+        msg: "Failure, file is not correct."
+      when: (ant_tgz_stat.stat.checksum != '74c107a72d8f5691445e5afde22d85b447bea5c4654fdfb9833e01e0a0089cd8')
+    - unarchive:
+        src: /tmp/apache-ant-1.9.3-src.zip
+        dest: /usr/local/
+        remote_src: yes
+    - file:
+        path: /usr/local/apache-ant-1.9.3
+        owner: ubuntu
+        group: ubuntu
+        recurse: yes
+  when: ant193_dir.stat.exists == False
+  become: yes 
+
+- name: Install awscli via pip
+  pip: >
+    name=awscli
+    state=latest
+  become: yes       
