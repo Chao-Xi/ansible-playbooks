@@ -1,0 +1,3 @@
+- name: Print instance_tags jenkinsMasterId 
+  debug: var=instance_tags.tags.JenkinsMasterId
+#var : A variable name to debug. Mutually exclusive with the 'msg' option.
