@@ -1,0 +1,59 @@
+---
+- hosts: 127.0.0.1
+  connection: local
+  tasks:
+  - name: get all jenkins agents status
+    ec2_instance_facts:
+      filters:
+        "tag:GroupName": "{{ GroupName }}"
+#filter by group name        
+      region: "{{ REGION_NAME }}"
+#region      
+    register: agents_facts
+    tags:
+      - describe
+      - start
+      - stop
+
+  - name: print agents info
+    debug: var=agents_facts
+    tags:
+      - describe
+      - start
+      - stop
+
+# item 
+# This looup returns a list of items given to it, if any of the top level items is also a list it will flatten it, but it will not recurse
+# looup all items inside with_items
+# all output variable name => {{item}}
+  - name: print instance id
+    debug:
+      msg: "{{item.tags.Name}} {{item.instance_id}} is {{item.state.name}}"
+    with_items: "{{ agents_facts.instances }}"
+    tags:
+      - describe
+      - start
+      - stop
+
+
+  - name: Ensure agents are running
+    ec2_instance:
+      state: running
+      instance_ids:
+          - "{{ item.instance_id }}"
+    environment:
+      AWS_REGION: "{{ REGION_NAME }}"
+    with_items: "{{ agents_facts.instances }}"
+    tags:
+      - start
+
+  - name: Ensure agents are stopped
+    ec2_instance:
+      state: stopped
+      instance_ids:
+          - "{{ item.instance_id }}"
+    environment:
+      AWS_REGION: "{{ REGION_NAME }}"
+    with_items: "{{ agents_facts.instances }}"
+    tags:
+      - stop
