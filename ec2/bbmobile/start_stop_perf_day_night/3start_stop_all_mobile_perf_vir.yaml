@@ -1,0 +1,114 @@
+---
+- hosts: 127.0.0.1
+  connection: local
+  tasks:
+  - name: get all jenkins agents status
+    ec2_instance_facts:
+      filters:
+        vpc-id: vpc-####
+        "tag:GroupName": mobile_performance_tagName
+      region: "us-east-1"
+#   region: virgina us-east-1
+    register: agents_facts
+    tags:
+      - describe
+      - start
+      - stop
+
+  - name: print agents info
+    debug: var=agents_facts
+    tags:
+      - describe
+      - start
+      - stop
+
+  - name: print instance id
+    debug:
+      msg: "{{item.tags.Name}} {{item.instance_id}} is {{item.state.name}}"
+#looup agents_facts.instances as item
+    with_items: "{{ agents_facts.instances }}"
+    tags:
+      - describe
+      - start
+      - stop
+
+  - name: Ensure agents are running
+    ec2_instance:
+      state: running
+      instance_ids:
+          - "{{ item.instance_id }}"
+# with {{ item.instance_id }} as one condition 
+    environment:
+      AWS_REGION: "us-east-1"
+    with_items: "{{ agents_facts.instances }}"
+# if it's loop, must use with_items    
+    tags:
+      - start
+
+  - name: Ensure agents are stopped
+    ec2_instance:
+      state: stopped
+      instance_ids:
+          - "{{ item.instance_id }}"
+    environment:
+      AWS_REGION: "us-east-1"
+    with_items: "{{ agents_facts.instances }}"
+    tags:
+      - stop
+
+  - name: start one instance by tag Name
+    ec2_instance_facts:
+      filters:
+        vpc-id: vpc-5947e33d
+        "tag:GroupName": mobile_performance_tagName
+        "tag:Name": "{{ ONE_INSTNACE_NAME }}"
+#   {{ ONE_INSTNACE_NAME }}  as input variable  
+      region: "us-east-1"
+    register: one_instance_facts
+    tags:
+      - start-one
+      - stop-one
+
+  - name: print the instance facts
+    debug: var=one_instance_facts
+    tags:
+      - start-one
+      - stop-one
+
+  - name: Check instance exists and is unique 
+    fail:
+      msg: "The instance not exists or not an jenkins agent"
+    when: (one_instance_facts.instances| length == 0) or (one_instance_facts.instances| length > 1)
+#one_instance_facts.instances| length == 0
+#one_instance_facts.instances| length > 1
+    tags:
+      - start-one
+      - stop-one
+
+  - name: Check instance in vpc, and is agent
+    fail:
+      msg: "The instance not exists or not an jenkins agent"
+    when: (one_instance_facts.instances[0].vpc_id != 'vpc-5947e33d') or (one_instance_facts.instances[0].tags.GroupName != 'mobile-perf-Jmeter')
+    tags:
+      - start-one
+      - stop-one
+
+  - name: Ensure agents are stopped
+    ec2_instance:
+      state: stopped
+      instance_ids:
+          - "{{ one_instance_facts.instances[0].instance_id }}"
+    environment:
+      AWS_REGION: "us-east-1"
+    tags:
+      - stop-one
+
+  - name: Ensure agents are running
+    ec2_instance:
+      state: running
+      instance_ids:
+          - "{{ one_instance_facts.instances[0].instance_id }}"
+    environment:
+      AWS_REGION: "us-east-1"
+    tags:
+      - start-one
