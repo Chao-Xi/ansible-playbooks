@@ -1,0 +1,73 @@
+  - name: "Get legacy cloudformation stack name"
+    shell:
+      "aws cloudformation describe-stacks --region {{ Global_AWS_Region }} | grep StackName | grep Ansible-{{ APP_ASG_IDENTIFIER }}-asg | head -1 | awk -F '\"' '{print $4}'"
+    register: REG_LEGACY_STACK_NAME
+# Global_AWS_Region = us-east-1
+# APP_ASG_IDENTIFIER = mbaas - dev    Ansible-mbaas-dev-asg  
+# aws cloudformation describe-stacks --region us-east-1 | grep StackName | grep Ansible-mbaas-dev-asg | head -1 | awk -F '\"' '{print $4}'
+# aws cloudformation describe-stacks --region us-east-1 | grep StackName | grep Ansible-mbaas-dev-asg 
+#             "StackName": "Ansible-mbaas-dev-asg-########",
+#  "head -1"  show first 1 line  ( grep Ansible-mbaas-dev-asg | head -1)
+#  awk -F: '{print $4}'    
+#  awk this is the interpreter for the AWK Programming Language. The AWK language is useful for manipulation of data files, text retrieval and processing
+#  -F <value> - tells awk what field separator to use. In your case, -F: means that the separator is : (colon).
+#  '{print $4}' means print the fourth field (the fields being separated by :).
+#  '\"'  separate by ' " ‘
+#  "StackName": "Ansible-mbaas-dev-asg-########", separated by "
+#  1   
+#  2 StackName  
+#  3 : 
+#  4 Ansible-mbaas-dev-asg-########
+#  5 ,
+
+  - name: "Get legacy instance list by ELB name"
+    shell:
+      "aws elb describe-load-balancers --load-balancer-name {{ MBAAS_ASG_NEW_ELB_NAME }} --region {{ Global_AWS_Region }} | egrep -o 'i-.{17}' | head -1"
+    register: REG_LEGACY_INSTANCE
+#  mbaas_elb_name = mbaas - dev -vir
+#  MBAAS_ASG_NEW_ELB_NAME=mbaas-dev-vir
+#  Global_AWS_Region=us-east-1
+#  aws elb describe-load-balancers --load-balancer-name mbaas-dev-vir --region us-east-1 | egrep -o 'i-.{17}'
+#  output:
+#  i-############
+#  i-############
+#  Search for a pattern using extended regular expressions.   egrep 
+#  -o : Show only the part of a matching line that matches PATTERN.
+#  'i-.{}'
+#  aws elb describe-load-balancers --load-balancer-name mbaas-dev-vir --region us-east-1 
+#  https://www.computerhope.com/jargon/r/regex.htm
+#  i-.{17}  . is match any character   {17} is The exact 'x' amount of times to match   .{17}  17 times ant characters
+#  'i-[0-9a-f]+'   Matches any characters between 'a' and 'z' and '0' between '9'
+#  Matches character before + one or more times
+#  https://docs.aws.amazon.com/cli/latest/userguide/controlling-output.html
+#  aws elb describe-load-balancers --load-balancer-name mbaas-dev-vir --region us-east-1 --query 'LoadBalancerDescriptions[*].Instances[*].[InstanceId]' --output text
+#  output:
+#  i-############
+#  i-############
+
+
+#  aws elb describe-load-balancers --load-balancer-name mbaas-dev-vir --region us-east-1 --query 'LoadBalancerDescriptions[*].Instances[*].[InstanceId]' --output text
+#  equals
+#  aws elb describe-load-balancers --load-balancer-name mbaas-dev-vir --region us-east-1 | egrep -o 'i-.{17}'
+
+  - name: "Get ASG name by instanceId from instanceTag"
+    shell:
+      "aws ec2 describe-instances --instance-ids {{ REG_LEGACY_INSTANCE.stdout }} --region {{ Global_AWS_Region }} | sed -n '/groupName/{g;1!p;};h' | cut -d'\"' -f4"
+    register: REG_LEGACY_ASG_GROUPNAME
+
+# i-0a093c128e49359f8
+# us-east-1
+# aws ec2 describe-instances --instance-ids i-################# --region us-east-1 | sed -n '/groupName/{g;1!p;};h'
+# aws ec2 describe-instances --instance-ids i-################# --query 'Reservations[].Instances[].Tags[?Key==`aws:autoscaling:groupName`].Value[]' --output text
+# Ansible-mbaas-dev-asg-1516852767-MbaasAutoScalingGroup-#########
+
+  - name: "Suspend or resume ASG before/after update war"
+    shell:
+      "aws autoscaling {{ OPERATION_ASG }} --auto-scaling-group-name {{ REG_LEGACY_ASG_GROUPNAME.stdout }} --region {{ Global_AWS_Region }}"
+# To suspend all processes
+# aws autoscaling suspend-processes --auto-scaling-group-name my-asg (omitting the --scaling-processes option)
+
+
+  - name: "Debug REG_LEGACY_INSTANCE_LIST"
+    debug:
+      msg: "ASG groupName is {{ REG_LEGACY_ASG_GROUPNAME }}"

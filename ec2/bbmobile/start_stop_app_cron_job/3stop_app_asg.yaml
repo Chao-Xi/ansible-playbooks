@@ -1,0 +1,11 @@
+---
+- hosts: localhost
+  vars:
+    OPERATION_ASG: suspend-processes
+  gather_facts: no
+  roles:
+    - operation-asg
+
+# Suspend and Resume Processes Using the AWS CLI
+# To suspend all processes
+# aws autoscaling suspend-processes --auto-scaling-group-name my-asg (omitting the --scaling-processes option)

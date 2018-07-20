@@ -1,0 +1,8 @@
+---
+- hosts: localhost
+  vars:
+    OPERATION_ASG: resume-processes
+  gather_facts: no
+  roles:
+    - check-elb
+    - operation-asg

@@ -1,0 +1,38 @@
+ - name: "Wait until Stauts of new instance in new ASG to be updated to 'InService' from 'OutOfService' in 30 minutes by ELB name"
+    shell:
+      "aws elb describe-instance-health --load-balancer-name {{ MBAAS_ASG_NEW_ELB_NAME }} --output text --region {{ Global_AWS_Region }} | grep OutOfService | wc -l"
+    register: REG_OUTOFSERVICE_INSTANCE_COUNT
+    until: REG_OUTOFSERVICE_INSTANCE_COUNT.stdout == "0"
+    retries: 60
+    delay: 30
+    ignore_errors: no
+
+# MBAAS_ASG_NEW_ELB_NAME = mbaas-dev-vir
+# us-east-1
+# aws elb describe-instance-health --load-balancer-name mbaas-dev-vir --output text --region us-east-1
+# INSTANCESTATES  N/A i-################# N/A InService
+# INSTANCESTATES  N/A i-################# N/A InService
+
+# aws elb describe-instance-health --load-balancer-name mbaas-dev-vir --output text --region us-east-1 | grep InService | 
+# INSTANCESTATES  N/A i-################# N/A InService
+# INSTANCESTATES  N/A i-################# N/A InService
+
+# aws elb describe-instance-health --load-balancer-name mbaas-dev-vir --output text --region us-east-1 | grep InService | wc -l
+# We will use a pipe to count the number of lines, words and characters in a file with the UNIX wc command like this:
+# wc to count the number of line  
+# 2 
+# 6 WC Command Examples to Count Number of Lines, Words, Characters in Linux
+# The wc (word count) command in Unix/Linux operating systems is used to find out number of newline count, word count, byte and characters count in a files specified by the file arguments
+# wc -l : Prints the number of lines in a file.
+# wc -w : prints the number of words in a file.
+# wc -c : Displays the count of bytes in a file.
+# wc -m : prints the count of characters from a file.
+# wc -L : prints only the length of the longest line in a file.
+# https://www.tecmint.com/wc-command-examples/
+
+# Do-Until Loops
+# The above example run the shell module recursively till the REG_OUTOFSERVICE_INSTANCE_COUNT.stdout == "0" 
+# or the task has been retried for 60 times with a delay of 30 seconds. 
+# The default value for “retries” is 60 and “delay” is 30.
+# https://docs.ansible.com/ansible/2.6/user_guide/playbooks_error_handling.html
+# Ignoring Failed Commands
