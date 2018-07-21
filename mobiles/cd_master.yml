@@ -1,0 +1,5 @@
+---
+- hosts: tag_Name_bbmobile_cd_jenkins
+  roles:
+    - { role: base }
+    - { role: jenkins_master }

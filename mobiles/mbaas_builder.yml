@@ -1,0 +1,5 @@
+---
+- hosts: tag_Name_bbmobile_mbaas_builder
+  roles:
+    - { role: base }
+    - { role: mbaas_builder }

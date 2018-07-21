@@ -1,0 +1,5 @@
+---
+- hosts: tag_Name_bbmobile_android_builder
+  roles:
+    - { role: base }
+    - { role: android_builder }

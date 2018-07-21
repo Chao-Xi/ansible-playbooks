@@ -1,0 +1,11 @@
+---
+- hosts: tag_Name_bbmobile_release_server
+  become: true
+  roles:
+    - { role: base }
+
+- hosts: tag_Name_bbmobile_docker_builder
+  become: true
+  roles:
+    - { role: base }
+    - { role: docker_builder }

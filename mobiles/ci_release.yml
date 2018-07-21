@@ -1,0 +1,6 @@
+---
+- hosts: tag_Name_bbmobile_ci_release_server
+  become: true
+  roles:
+    - { role: base }
+    - { role: release_server }

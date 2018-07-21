@@ -1,0 +1,6 @@
+---
+- hosts: tag_Name_target_host_name
+  become: true
+  roles:
+    - { role: base }
+    - { role: target_host_name }

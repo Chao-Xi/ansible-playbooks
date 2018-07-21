@@ -1,0 +1,5 @@
+---
+- hosts: tag_Name_bbmobile_feedback_ui_server_builder
+  roles:
+    - { role: base }
+    - { role: feedback_ui_server_builder }

@@ -1,0 +1,5 @@
+---
+- hosts: tag_Name_bbmobile_release_server
+  roles:
+    - { role: base }
+    - { role: release_server }

@@ -1,0 +1,5 @@
+---
+- hosts: tag_Name_bbmobile_docker_builder
+  roles:
+    - { role: base }
+    - { role: docker_builder }
