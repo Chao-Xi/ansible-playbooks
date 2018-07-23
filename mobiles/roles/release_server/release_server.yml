@@ -1,0 +1,13 @@
+##set private key for ssh connection
+##set known hosts
+- name: Add know_hosts
+  know_hosts:
+    path: /home/ubuntu/.ssh/known_hosts
+    name: "{{ item }}"
+    key: "{{ lookup('files', 'pubkeys/item') }}"
+## known_hosts module lets you add or remove a host keys from the known_hosts file.
+## Hash the hostname in the known_hosts file   
+    hash_hosts: True
+  with_items:
+    - ansible-dev
+    - ansible-stage
